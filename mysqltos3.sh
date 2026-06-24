@@ -5,18 +5,10 @@
 # Param: auto | month | week | day
 # By default: auto
 #
-# change these variables to what you need
-MYSQLROOT=root
-MYSQLPASS=
-S3BUCKET=my_bucket
-#Path for full backup and differential backup. Must end with /
-BACKUP_PATH=/backups/
-# Name of backup dir, within BACKUP_PATH 
-BACKUP_DIRNAME=music_collect
-# the following line prefixes the backups with the defined directory. it must be blank or end with a /
-S3PATH=
-# when running via cron, the PATHs MIGHT be different
-PERCONA_BACKUP_COMMAND=/usr/bin/innobackupex
+# Source the variables script (DRY)
+DIR="${BASH_SOURCE%/*}"
+if [[ ! -d "$DIR" ]]; then DIR="$PWD"; fi
+. "$DIR/variables.sh"
 
 #Week num, from 01 to 53 starting Monday
 week_curr=$(date +"%V")
@@ -88,7 +80,7 @@ echo "*************** Done compressing the backup file. ***********************"
 
 # upload all databases
 echo "*************** Uploading the new backup... *****************************"
-s3cmd put -f ${BACKUP_PATH}${BACKUP_DIRNAME}${DATESTAMP}.tar.gz s3://${S3BUCKET}/${S3PATH}${CURRENT}/
+s3cmd put --acl-private -f ${BACKUP_PATH}${BACKUP_DIRNAME}${DATESTAMP}.tar.gz s3://${S3BUCKET}/${S3PATH}${CURRENT}/
 echo "*************** New backup uploaded. ************************************"
 
 # Remove old backups from 2 periods ago, if period is month or week, plus daily differential backups
